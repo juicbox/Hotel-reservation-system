@@ -24,6 +24,7 @@ class ExcelStorage:
         self.file_path = Path(file_path)
 
     def save(self, system: HotelSystem) -> None:
+        """Write the complete in-memory hotel system to an Excel workbook."""
         workbook = Workbook()
         workbook.remove(workbook.active)
 
@@ -34,10 +35,12 @@ class ExcelStorage:
         workbook.save(self.file_path)
 
     def load(self, system: HotelSystem) -> bool:
+        """Load data into the system if the Excel file already exists."""
         if not self.file_path.exists():
             return False
 
         workbook = load_workbook(self.file_path)
+        # Clear preload/session data before replacing it with persisted records.
         system.rooms.clear()
         system.users.clear()
         system.bookings.clear()
@@ -50,6 +53,7 @@ class ExcelStorage:
         return True
 
     def _write_rooms(self, workbook: Workbook, system: HotelSystem) -> None:
+        """Persist room inventory and current room status."""
         sheet = workbook.create_sheet("rooms")
         sheet.append(
             [
@@ -80,6 +84,7 @@ class ExcelStorage:
             )
 
     def _write_users(self, workbook: Workbook, system: HotelSystem) -> None:
+        """Persist users, including guest loyalty points and staff access level."""
         sheet = workbook.create_sheet("users")
         sheet.append(
             [
@@ -114,6 +119,7 @@ class ExcelStorage:
             )
 
     def _write_bookings(self, workbook: Workbook, system: HotelSystem) -> None:
+        """Persist bookings and serialize attached services into one cell."""
         sheet = workbook.create_sheet("bookings")
         sheet.append(
             [
@@ -154,6 +160,7 @@ class ExcelStorage:
             )
 
     def _write_services_catalog(self, workbook: Workbook, system: HotelSystem) -> None:
+        """Persist the reusable service catalogue."""
         sheet = workbook.create_sheet("services_catalog")
         sheet.append(["service_id", "name", "category", "unit_price", "quantity"])
         for service in system.services.values():
@@ -168,6 +175,7 @@ class ExcelStorage:
             )
 
     def _read_rooms(self, workbook: Workbook, system: HotelSystem) -> None:
+        """Rebuild room objects from the rooms worksheet."""
         if "rooms" not in workbook.sheetnames:
             return
         sheet = workbook["rooms"]
@@ -188,6 +196,7 @@ class ExcelStorage:
             system.add_room(room)
 
     def _read_users(self, workbook: Workbook, system: HotelSystem) -> None:
+        """Rebuild users as Guest, Staff, or SuperAdmin based on stored role."""
         if "users" not in workbook.sheetnames:
             return
         sheet = workbook["users"]
@@ -216,6 +225,7 @@ class ExcelStorage:
             system.add_user(user)
 
     def _read_bookings(self, workbook: Workbook, system: HotelSystem) -> None:
+        """Rebuild bookings and relink each booking ID to the matching guest."""
         if "bookings" not in workbook.sheetnames:
             return
         sheet = workbook["bookings"]
@@ -243,6 +253,7 @@ class ExcelStorage:
                 guest.bookings.append(booking.booking_id)
 
     def _read_services_catalog(self, workbook: Workbook, system: HotelSystem) -> None:
+        """Rebuild the service catalogue from Excel."""
         if "services_catalog" not in workbook.sheetnames:
             return
         sheet = workbook["services_catalog"]
@@ -259,6 +270,7 @@ class ExcelStorage:
             system.add_service_catalog_item(service)
 
     def _parse_services(self, raw: str) -> list[Service]:
+        """Convert serialized booking service strings back into Service objects."""
         if not raw:
             return []
         services = []

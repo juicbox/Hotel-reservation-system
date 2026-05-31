@@ -9,6 +9,8 @@ from hotel.models.service import Service
 
 @dataclass
 class Booking:
+    """Reservation transaction linking one guest to one room and date range."""
+
     booking_id: str
     guest_id: str
     room_id: str
@@ -24,6 +26,7 @@ class Booking:
 
     @property
     def is_active(self) -> bool:
+        """Active bookings still reserve room availability."""
         return self.status in {
             BookingStatus.PENDING,
             BookingStatus.CONFIRMED,
@@ -31,9 +34,11 @@ class Booking:
         }
 
     def overlaps(self, check_in: date, check_out: date) -> bool:
+        """Return True when another date range intersects this booking."""
         return check_in < self.check_out_date and check_out > self.check_in_date
 
     def validate_overlap(self, existing_bookings: list["Booking"]) -> bool:
+        """Prevent another active booking from using the same room at the same time."""
         for booking in existing_bookings:
             if booking.booking_id == self.booking_id:
                 continue
@@ -44,6 +49,7 @@ class Booking:
         return True
 
     def compute_charges(self, nightly_rate: float, seasonal_multiplier: float = 1.0) -> float:
+        """Calculate room charges plus optional service charges."""
         nights = (self.check_out_date - self.check_in_date).days
         if nights <= 0:
             raise ValueError("Check-out must be after check-in.")
@@ -73,6 +79,7 @@ class Booking:
         self.modified_at = datetime.now()
 
     def generate_invoice(self) -> dict:
+        """Build a simple invoice dictionary for display or export."""
         return {
             "booking_id": self.booking_id,
             "guest_id": self.guest_id,

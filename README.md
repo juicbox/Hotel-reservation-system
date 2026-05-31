@@ -36,7 +36,17 @@ From the project root:
 
 - `streamlit run src/app_streamlit.py`
 
-This launches a browser UI with core screens for search, booking, viewing bookings, and staff/admin actions.
+This launches a single browser UI that serves both guest and admin experiences:
+
+- **Guest portal** is the default view (no login required).
+- **Admin login** button in the top-right corner reveals a compact sign-in form.
+  - Credentials: username `admin`, password `admin`
+  - Once signed in, the sidebar and pages switch to the admin portal.
+  - A **Sign out** button returns to the guest view.
+
+The standalone portals are also available:
+- `streamlit run src/app_guest.py`
+- `streamlit run src/app_admin.py`
 
 ## Data persistence
 

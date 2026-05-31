@@ -7,6 +7,8 @@ from hotel.models.user import User
 
 @dataclass
 class Staff(User):
+    """Operational staff account with controlled access to hotel workflows."""
+
     staff_id: str = ""
     department: str = ""
     shift: ShiftType = ShiftType.MORNING
@@ -15,6 +17,7 @@ class Staff(User):
     access_level: int = 1
 
     def has_permission(self, permission: str) -> bool:
+        """Allow common staff actions and gate maintenance actions by access level."""
         common_permissions = {
             "search_rooms",
             "view_guest_bookings",
@@ -42,6 +45,7 @@ class Staff(User):
         phone: str,
         access_level: int = 1,
     ) -> "Staff":
+        """Factory helper that creates a staff user with role and staff ID set."""
         return cls(
             user_id=user_id,
             full_name=full_name,

@@ -7,9 +7,11 @@ from hotel.models import Guest, Room, Service, Staff, SuperAdmin
 
 def preload_data(system: HotelSystem) -> None:
     """Load starter records required by the assignment."""
+    # Do not overwrite records that were loaded from Excel or already created in memory.
     if system.rooms or system.users:
         return
 
+    # Seed enough room variety for search, pricing, and booking demonstrations.
     rooms = [
         Room("RM-101", "101", RoomType.SINGLE, 1, 1, 120.0, amenities=["WiFi", "TV"]),
         Room("RM-102", "102", RoomType.DOUBLE, 1, 2, 180.0, amenities=["WiFi", "TV"]),
@@ -28,6 +30,7 @@ def preload_data(system: HotelSystem) -> None:
     for room in rooms:
         system.add_room(room)
 
+    # Demo guest accounts are used by the Streamlit guest login screen.
     guest_1 = Guest.create("GU-001", "John Parker", "john@example.com", "hash123", "0400000001")
     guest_1.nationality = "Australian"
     guest_1.id_verified = True
@@ -52,6 +55,7 @@ def preload_data(system: HotelSystem) -> None:
     for user in users:
         system.add_user(user)
 
+    # The service catalogue is copied onto bookings when guests select add-ons.
     service_catalog = [
         Service("SV-001", "Breakfast Buffet", ServiceCategory.BREAKFAST, 25.0),
         Service("SV-002", "Airport Transfer", ServiceCategory.TRANSPORT, 60.0),

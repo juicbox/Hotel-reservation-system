@@ -13,14 +13,17 @@ DATA_FILE = Path("hotel_data.xlsx")
 
 
 def parse_date(text: str) -> date:
+    """Parse ISO dates entered in the console menu."""
     return date.fromisoformat(text.strip())
 
 
 def prompt(msg: str) -> str:
+    """Read trimmed console input."""
     return input(msg).strip()
 
 
 def show_room(room) -> None:
+    """Print one room in a compact console-friendly format."""
     print(
         f"{room.room_id:<8} {room.room_number:<6} {room.room_type.value:<10} "
         f"cap={room.capacity:<2} rate=${room.base_nightly_rate:<7.2f} status={room.current_status.value}"
@@ -28,6 +31,7 @@ def show_room(room) -> None:
 
 
 def search_rooms_menu(system: HotelSystem) -> None:
+    """Collect optional search filters and display matching rooms."""
     print("\nSearch Rooms")
     room_id = prompt("Room ID (or press Enter): ") or None
     room_type_text = prompt("Room type [single/double/suite/penthouse/accessible] (or Enter): ")
@@ -51,6 +55,7 @@ def search_rooms_menu(system: HotelSystem) -> None:
 
 
 def create_booking_menu(system: HotelSystem) -> None:
+    """Collect booking details and optional service selections from the console."""
     print("\nCreate Booking")
     guest_id = prompt("Guest ID: ")
     room_id = prompt("Room ID: ")
@@ -67,6 +72,7 @@ def create_booking_menu(system: HotelSystem) -> None:
                 f"- {service.service_id}: {service.name} "
                 f"(${service.unit_price:.2f}, category={service.category.value})"
             )
+        # Service catalogue items are copied so each booking can store its own quantity/date.
         while True:
             service_id = prompt("Service ID (or Enter to finish): ")
             if not service_id:
@@ -102,6 +108,7 @@ def create_booking_menu(system: HotelSystem) -> None:
 
 
 def update_complete_booking_menu(system: HotelSystem) -> None:
+    """Handle booking date updates, cancellations, and checkout completion."""
     print("\nUpdate or Complete Booking")
     booking_id = prompt("Booking ID: ")
     action = prompt("Action [update/cancel/complete]: ").lower()
@@ -136,6 +143,7 @@ def update_complete_booking_menu(system: HotelSystem) -> None:
 
 
 def view_bookings_menu(system: HotelSystem) -> None:
+    """Show active bookings and optionally one guest's booking history."""
     print("\nActive Bookings")
     active = system.list_active_bookings()
     if not active:
@@ -161,6 +169,7 @@ def view_bookings_menu(system: HotelSystem) -> None:
 
 
 def staff_admin_menu(system: HotelSystem) -> None:
+    """Console menu for staff/admin-only operations."""
     print("\nStaff/Admin Action")
     operator_id = prompt("Your user ID: ")
     user = system.users.get(operator_id)
@@ -219,6 +228,7 @@ def staff_admin_menu(system: HotelSystem) -> None:
 
 
 def create_room_from_input():
+    """Build a Room object from console input fields."""
     room_id = prompt("Room ID: ")
     room_number = prompt("Room Number: ")
     room_type = RoomType(prompt("Room type [single/double/suite/penthouse/accessible]: ").lower())
@@ -237,6 +247,7 @@ def create_room_from_input():
 
 
 def bootstrap_system() -> tuple[HotelSystem, ExcelStorage]:
+    """Load saved Excel data when present, otherwise seed default data."""
     system = HotelSystem.get_instance()
     storage = ExcelStorage(DATA_FILE)
     loaded = storage.load(system)
@@ -249,6 +260,7 @@ def bootstrap_system() -> tuple[HotelSystem, ExcelStorage]:
 
 
 def run_console() -> None:
+    """Run the interactive console menu until the user saves and exits."""
     system, storage = bootstrap_system()
     print("\nHotel Room Reservation System")
 

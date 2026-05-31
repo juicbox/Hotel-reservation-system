@@ -21,12 +21,14 @@ class HotelSystem:
 
     @classmethod
     def get_instance(cls) -> "HotelSystem":
+        """Return the shared singleton instance used by the console app."""
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance
 
     @classmethod
     def reset_instance(cls) -> "HotelSystem":
+        """Create a fresh singleton instance, useful for Streamlit session startup."""
         cls._instance = cls()
         return cls._instance
 
@@ -34,6 +36,7 @@ class HotelSystem:
         self.rooms[room.room_id] = room
 
     def remove_room(self, room_id: str) -> bool:
+        """Remove a room only when it has no active bookings."""
         if room_id not in self.rooms:
             return False
         has_active = any(
@@ -51,6 +54,7 @@ class HotelSystem:
         self.services[service.service_id] = service
 
     def authenticate(self, email: str, password_hash: str) -> User | None:
+        """Find an active user whose credentials match the login request."""
         for user in self.users.values():
             if user.login(email, password_hash):
                 return user
@@ -65,6 +69,7 @@ class HotelSystem:
         check_in: date | None = None,
         check_out: date | None = None,
     ) -> list[Room]:
+        """Search rooms using optional guest-facing filters."""
         results = []
         for room in self.rooms.values():
             if room_id and room.room_id != room_id:
@@ -91,6 +96,7 @@ class HotelSystem:
         created_by: str,
         service_items: list[Service] | None = None,
     ) -> Booking:
+        """Create a pending booking request for a valid guest and available room."""
         if guest_id not in self.users or self.users[guest_id].role != UserRole.GUEST:
             raise ValueError("Guest ID is invalid.")
         if room_id not in self.rooms:
@@ -113,6 +119,7 @@ class HotelSystem:
             booking.add_service(service)
         booking.compute_charges(room.base_nightly_rate, room.seasonal_multiplier)
 
+        # Keep both the central booking collection and the guest history in sync.
         self.bookings[booking.booking_id] = booking
         guest = self.users[guest_id]
         if isinstance(guest, Guest):
@@ -121,6 +128,7 @@ class HotelSystem:
         return booking
 
     def update_booking_dates(self, booking_id: str, check_in: date, check_out: date) -> bool:
+        """Update booking dates if the new range is valid and not double-booked."""
         booking = self.bookings.get(booking_id)
         if booking is None:
             return False
@@ -133,6 +141,7 @@ class HotelSystem:
         return True
 
     def cancel_booking(self, booking_id: str, reason: str) -> bool:
+        """Cancel an active booking and make the room available if possible."""
         booking = self.bookings.get(booking_id)
         if booking is None or not booking.is_active:
             return False
@@ -141,6 +150,7 @@ class HotelSystem:
         return True
 
     def complete_booking(self, booking_id: str) -> dict | None:
+        """Mark a booking as checked out and return its invoice."""
         booking = self.bookings.get(booking_id)
         if booking is None:
             return None
@@ -153,6 +163,7 @@ class HotelSystem:
         return invoice
 
     def process_booking_request(self, booking_id: str, approve: bool) -> bool:
+        """Approve or deny a pending booking from the admin portal."""
         booking = self.bookings.get(booking_id)
         if booking is None or booking.status != BookingStatus.PENDING:
             return False
@@ -177,6 +188,7 @@ class HotelSystem:
         return [booking for booking in self.bookings.values() if booking.guest_id == guest_id]
 
     def apply_seasonal_pricing(self, season: Season) -> None:
+        """Apply the selected seasonal multiplier to every room."""
         self.current_season = season
         multipliers = {Season.LOW: 0.85, Season.NORMAL: 1.0, Season.PEAK: 1.35}
         multiplier = multipliers[season]
@@ -184,6 +196,7 @@ class HotelSystem:
             room.seasonal_multiplier = multiplier
 
     def generate_report(self, report_type: ReportType, generated_by: str) -> Report:
+        """Build a current operational report for the admin UI."""
         total_rooms = len(self.rooms)
         active_bookings = self.list_active_bookings()
         occupied_rooms = len({booking.room_id for booking in active_bookings})
@@ -205,6 +218,7 @@ class HotelSystem:
         )
 
     def _refresh_room_status(self, room_id: str) -> None:
+        """Recalculate room status after booking approval, cancellation, or checkout."""
         room = self.rooms.get(room_id)
         if room is None:
             return
@@ -224,6 +238,7 @@ def build_user_from_role(
     phone: str,
     access_level: int = 1,
 ) -> User:
+    """Rebuild the correct User subclass when loading users from Excel."""
     if role == UserRole.GUEST:
         return Guest.create(user_id, full_name, email, password_hash, phone)
     if role == UserRole.STAFF:

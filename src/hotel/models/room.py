@@ -7,6 +7,8 @@ from hotel.enums import RoomStatus, RoomType
 
 @dataclass
 class Room:
+    """Hotel room record with pricing, capacity, and availability behaviour."""
+
     room_id: str
     room_number: str
     room_type: RoomType
@@ -35,9 +37,11 @@ class Room:
         return True
 
     def set_maintenance(self, flag: bool) -> None:
+        """Switch the room in or out of maintenance status."""
         self.current_status = RoomStatus.MAINTENANCE if flag else RoomStatus.AVAILABLE
 
     def update_rate(self, new_rate: float, admin_id: str) -> None:
+        """Update the base nightly rate after validating the new amount."""
         if new_rate <= 0:
             raise ValueError("Nightly rate must be greater than zero.")
         _ = admin_id  # kept for audit extension

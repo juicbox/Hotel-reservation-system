@@ -6,6 +6,8 @@ from hotel.models.user import User
 
 @dataclass
 class Guest(User):
+    """Customer account that can search rooms and manage their own bookings."""
+
     loyalty_points: int = 0
     membership_tier: str = "Standard"
     preferred_room_type: RoomType | None = None
@@ -14,6 +16,7 @@ class Guest(User):
     bookings: list[str] = field(default_factory=list)
 
     def has_permission(self, permission: str) -> bool:
+        """Guests are limited to self-service booking actions."""
         return permission in {
             "search_rooms",
             "create_booking",
@@ -25,6 +28,7 @@ class Guest(User):
         }
 
     def redeem_points(self, points: int) -> float:
+        """Convert loyalty points into a dollar discount value."""
         if points <= 0 or points > self.loyalty_points:
             raise ValueError("Invalid points redemption request.")
         self.loyalty_points -= points
@@ -39,6 +43,7 @@ class Guest(User):
         password_hash: str,
         phone: str,
     ) -> "Guest":
+        """Factory helper that ensures every new Guest has the guest role."""
         return cls(
             user_id=user_id,
             full_name=full_name,

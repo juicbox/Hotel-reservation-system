@@ -6,6 +6,8 @@ from hotel.models.staff import Staff
 
 @dataclass
 class SuperAdmin(Staff):
+    """Administrator account with unrestricted access to system functions."""
+
     system_permissions: set[str] = field(default_factory=lambda: {"all"})
     audit_log_access: bool = True
     override_enabled: bool = True
@@ -13,6 +15,7 @@ class SuperAdmin(Staff):
     report_recipient: str = ""
 
     def has_permission(self, permission: str) -> bool:
+        """Super admins can perform any supported permission."""
         _ = permission
         return True
 
@@ -25,6 +28,7 @@ class SuperAdmin(Staff):
         password_hash: str,
         phone: str,
     ) -> "SuperAdmin":
+        """Factory helper that creates an administrator with top access level."""
         return cls(
             user_id=user_id,
             full_name=full_name,
