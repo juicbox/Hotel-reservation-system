@@ -32,7 +32,7 @@ def main() -> None:
 
     st.sidebar.header("Admin dashboard")
     st.sidebar.success("Signed in as admin")
-    if st.sidebar.button("Sign out", use_container_width=True):
+    if st.sidebar.button("Sign out", width="stretch"):
         admin_logout()
         st.rerun()
 
@@ -60,7 +60,7 @@ def main() -> None:
         render_reports(system)
 
     st.divider()
-    if st.button("Save Data", use_container_width=True):
+    if st.button("Save Data", width="stretch"):
         save_data(storage, system)
 
 

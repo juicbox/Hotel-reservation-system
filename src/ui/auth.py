@@ -37,7 +37,7 @@ def render_admin_login_form() -> None:
                 label_visibility="collapsed", placeholder="Password",
             )
         with col3:
-            submit = st.button("Sign in", use_container_width=True, key="admin_login_submit")
+            submit = st.button("Sign in", width="stretch", key="admin_login_submit")
 
         if submit:
             if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
@@ -89,7 +89,20 @@ def _next_guest_id(system: HotelSystem) -> str:
     return f"GU-{next_num:03d}"
 
 
-def render_guest_login(system: HotelSystem) -> None:
+def _autosave_guest_change(storage, system: HotelSystem) -> None:
+    """Save guest-created records immediately when storage is available."""
+    if storage is None:
+        return
+    try:
+        storage.save(system)
+    except PermissionError:
+        st.warning(
+            "Account created for this session, but it could not be saved because "
+            "hotel_data.xlsx is open. Close the Excel file and use Save Data."
+        )
+
+
+def render_guest_login(system: HotelSystem, storage=None) -> None:
     """Login / register page shown when no guest is signed in."""
     page_header(
         "Guest account",
@@ -103,7 +116,7 @@ def render_guest_login(system: HotelSystem) -> None:
         with st.form("guest_login_form"):
             email = st.text_input("Email address")
             password = st.text_input("Password", type="password")
-            submitted = st.form_submit_button("Sign in", use_container_width=True)
+            submitted = st.form_submit_button("Sign in", width="stretch")
 
         if submitted:
             # Authenticate against HotelSystem users. The preload data stores
@@ -133,7 +146,7 @@ def render_guest_login(system: HotelSystem) -> None:
             phone = st.text_input("Phone number")
             password_reg = st.text_input("Password", type="password", key="reg_pw")
             password_confirm = st.text_input("Confirm password", type="password", key="reg_pw2")
-            register = st.form_submit_button("Create account", use_container_width=True)
+            register = st.form_submit_button("Create account", width="stretch")
 
         if register:
             # Validation
@@ -172,6 +185,7 @@ def render_guest_login(system: HotelSystem) -> None:
                     phone=phone.strip(),
                 )
                 system.add_user(new_guest)
+                _autosave_guest_change(storage, system)
                 st.session_state["guest_id"] = new_id
                 st.rerun()
 

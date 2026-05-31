@@ -31,7 +31,7 @@ def render_all_bookings(system: HotelSystem) -> None:
                 for booking in active
             ],
             hide_index=True,
-            use_container_width=True,
+            width="stretch",
         )
     else:
         st.info("No active bookings found.")
@@ -66,7 +66,7 @@ def render_booking_requests(system: HotelSystem) -> None:
                 for booking in pending
             ],
             hide_index=True,
-            use_container_width=True,
+            width="stretch",
         )
     else:
         st.info("No pending bookings.")
@@ -74,13 +74,13 @@ def render_booking_requests(system: HotelSystem) -> None:
     booking_id = st.text_input("Booking ID")
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("Approve", use_container_width=True, type="primary"):
+        if st.button("Approve", width="stretch", type="primary"):
             if system.process_booking_request(booking_id.strip(), True):
                 st.success("Booking approved.")
             else:
                 st.error("Approval failed. Check booking ID and status.")
     with col2:
-        if st.button("Deny", use_container_width=True):
+        if st.button("Deny", width="stretch"):
             if system.process_booking_request(booking_id.strip(), False):
                 st.success("Booking denied.")
             else:
@@ -109,14 +109,14 @@ def render_room_management(system: HotelSystem) -> None:
                 for room in system.rooms.values()
             ],
             hide_index=True,
-            use_container_width=True,
+            width="stretch",
         )
     else:
         st.info("No rooms in the system.")
 
     st.markdown("**Toggle maintenance**")
     room_id = st.selectbox("Room ID", options=sorted(system.rooms.keys()))
-    if st.button("Toggle maintenance status", use_container_width=True):
+    if st.button("Toggle maintenance status", width="stretch"):
         room = system.rooms[room_id]
         room.set_maintenance(room.current_status != RoomStatus.MAINTENANCE)
         st.success(f"Room {room_id} status is now: {room.current_status.value}")
@@ -129,7 +129,7 @@ def render_room_management(system: HotelSystem) -> None:
         floor = st.number_input("Floor", min_value=0, step=1)
         capacity = st.number_input("Capacity", min_value=1, step=1)
         rate = st.number_input("Base nightly rate", min_value=0.0, step=10.0)
-        submitted = st.form_submit_button("Add room", use_container_width=True)
+        submitted = st.form_submit_button("Add room", width="stretch")
 
     if submitted:
         if new_room_id in system.rooms:
@@ -150,7 +150,7 @@ def render_room_management(system: HotelSystem) -> None:
 
     st.markdown("**Remove room**")
     remove_id = st.selectbox("Room to remove", options=sorted(system.rooms.keys()), key="remove_room")
-    if st.button("Remove room", use_container_width=True):
+    if st.button("Remove room", width="stretch"):
         if system.remove_room(remove_id):
             st.success(f"Room {remove_id} removed.")
         else:
@@ -164,7 +164,7 @@ def render_seasonal_pricing(system: HotelSystem) -> None:
         "Apply a pricing multiplier across all rooms for low, normal, or peak seasons.",
     )
     season_raw = st.selectbox("Season", options=[item.value for item in Season])
-    if st.button("Apply seasonal pricing", use_container_width=True, type="primary"):
+    if st.button("Apply seasonal pricing", width="stretch", type="primary"):
         system.apply_seasonal_pricing(Season(season_raw))
         st.success(f"Seasonal pricing applied: {season_raw}")
 
@@ -176,7 +176,7 @@ def render_reports(system: HotelSystem) -> None:
         "Generate a readable snapshot of occupancy, revenue, room status, and recent activity.",
     )
 
-    if not st.button("Generate report", use_container_width=True, type="primary"):
+    if not st.button("Generate report", width="stretch", type="primary"):
         return
 
     report = system.generate_report(ReportType.FULL, "AD-001")
@@ -205,7 +205,7 @@ def render_reports(system: HotelSystem) -> None:
         st.dataframe(
             [{"Status": k, "Rooms": v} for k, v in sorted(status_counts.items())],
             hide_index=True,
-            use_container_width=True,
+            width="stretch",
         )
     with col_b:
         st.bar_chart(status_counts)
@@ -225,7 +225,7 @@ def render_reports(system: HotelSystem) -> None:
             st.dataframe(
                 [{"Status": k, "Bookings": v} for k, v in sorted(booking_counts.items())],
                 hide_index=True,
-                use_container_width=True,
+                width="stretch",
             )
         with col_d:
             st.bar_chart(booking_counts)
@@ -250,7 +250,7 @@ def render_reports(system: HotelSystem) -> None:
             st.dataframe(
                 [{"Room type": k, "Revenue ($)": f"{v:,.2f}"} for k, v in sorted(type_revenue.items())],
                 hide_index=True,
-                use_container_width=True,
+                width="stretch",
             )
         with col_f:
             st.bar_chart(type_revenue)
@@ -277,5 +277,5 @@ def render_reports(system: HotelSystem) -> None:
                 for b in recent
             ],
             hide_index=True,
-            use_container_width=True,
+            width="stretch",
         )

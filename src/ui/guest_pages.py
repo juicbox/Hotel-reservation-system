@@ -22,6 +22,19 @@ def _bookable_rooms(system: HotelSystem) -> list:
     ]
 
 
+def _autosave_guest_change(storage, system: HotelSystem) -> None:
+    """Persist guest-created booking changes when storage is available."""
+    if storage is None:
+        return
+    try:
+        storage.save(system)
+    except PermissionError:
+        st.warning(
+            "Your change was made for this session, but it could not be saved because "
+            "hotel_data.xlsx is open. Close the Excel file and ask admin to save again."
+        )
+
+
 def render_search(system: HotelSystem) -> None:
     """Render public room search; guests do not need an account to browse."""
     page_header(
@@ -46,7 +59,7 @@ def render_search(system: HotelSystem) -> None:
             check_in = None
             check_out = None
 
-    if st.button("Search", use_container_width=True, type="primary"):
+    if st.button("Search", width="stretch", type="primary"):
         room_type = RoomType(room_type_raw) if room_type_raw else None
         all_matches = system.search_rooms(
             room_id=None,
@@ -78,11 +91,11 @@ def render_search(system: HotelSystem) -> None:
                 for room in rooms
             ],
             hide_index=True,
-            use_container_width=True,
+            width="stretch",
         )
 
 
-def render_create_booking(system: HotelSystem, guest_id: str) -> None:
+def render_create_booking(system: HotelSystem, guest_id: str, storage=None) -> None:
     """Render booking form for the currently signed-in guest."""
     page_header(
         "Book a room",
@@ -119,7 +132,7 @@ def render_create_booking(system: HotelSystem, guest_id: str) -> None:
             f"Quantity: {label}", min_value=1, max_value=20, value=1, step=1
         )
 
-    if st.button("Request booking", use_container_width=True, type="primary"):
+    if st.button("Request booking", width="stretch", type="primary"):
         room_id = room_options[room_label]
         service_items = []
         for label in selected_service_labels:
@@ -145,6 +158,7 @@ def render_create_booking(system: HotelSystem, guest_id: str) -> None:
                 created_by=guest_id,
                 service_items=service_items,
             )
+            _autosave_guest_change(storage, system)
             st.success(
                 f"Booking request submitted! Reference: **{booking.booking_id}** | "
                 f"Total: **${booking.total_charges:.2f}** | "
@@ -176,7 +190,7 @@ def render_my_bookings(system: HotelSystem, guest_id: str) -> None:
                 for b in active
             ],
             hide_index=True,
-            use_container_width=True,
+            width="stretch",
         )
     else:
         st.info("You have no active bookings.")
@@ -196,13 +210,13 @@ def render_my_bookings(system: HotelSystem, guest_id: str) -> None:
                 for b in past
             ],
             hide_index=True,
-            use_container_width=True,
+            width="stretch",
         )
     else:
         st.info("No past bookings.")
 
 
-def render_manage_booking(system: HotelSystem, guest_id: str) -> None:
+def render_manage_booking(system: HotelSystem, guest_id: str, storage=None) -> None:
     """Allow guests to cancel eligible bookings from their own account."""
     page_header(
         "Cancel a booking",
@@ -227,12 +241,13 @@ def render_manage_booking(system: HotelSystem, guest_id: str) -> None:
     selected_label = st.selectbox("Select booking to cancel", options=list(booking_options.keys()))
     reason = st.text_area("Reason for cancellation")
 
-    if st.button("Cancel booking", use_container_width=True, type="primary"):
+    if st.button("Cancel booking", width="stretch", type="primary"):
         if not reason.strip():
             st.error("Please provide a reason for cancellation.")
         else:
             booking_id = booking_options[selected_label]
             if system.cancel_booking(booking_id, reason.strip()):
+                _autosave_guest_change(storage, system)
                 st.success("Your booking has been cancelled.")
             else:
                 st.error("Unable to cancel this booking. Please contact reception.")

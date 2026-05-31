@@ -35,12 +35,12 @@ def render_header() -> None:
         with st.container(border=True):
             if is_admin_authenticated():
                 st.caption("Admin session active")
-                if st.button("Admin Sign Out", use_container_width=True):
+                if st.button("Admin Sign Out", width="stretch"):
                     admin_logout()
                     st.rerun()
             else:
                 st.caption("Staff access")
-                if st.button("Admin Login", use_container_width=True, type="primary"):
+                if st.button("Admin Login", width="stretch", type="primary"):
                     st.session_state["show_admin_login"] = not st.session_state.get(
                         "show_admin_login", False
                     )
@@ -87,27 +87,27 @@ def render_admin_portal(system, storage) -> None:
         render_reports(system)
 
     st.divider()
-    if st.button("Save Data", use_container_width=True):
+    if st.button("Save Data", width="stretch"):
         save_data(storage, system)
 
 
-def _require_login(system) -> bool:
+def _require_login(system, storage) -> bool:
     """Show the login/register form and return False if the guest is not signed in."""
     if is_guest_authenticated():
         return True
     st.info("Please sign in or create an account to continue.")
-    render_guest_login(system)
+    render_guest_login(system, storage)
     return False
 
 
-def render_guest_portal(system) -> None:
+def render_guest_portal(system, storage) -> None:
     """Render public guest navigation; protected pages ask for login when needed."""
     # Sidebar — guest identity or prompt to sign in
     st.sidebar.header("Guest portal")
     if is_guest_authenticated():
         guest = system.users.get(get_current_guest_id())
         st.sidebar.success(f"Signed in as {guest.full_name}" if guest else "Signed in")
-        if st.sidebar.button("Sign out", use_container_width=True):
+        if st.sidebar.button("Sign out", width="stretch"):
             guest_logout()
             st.rerun()
     else:
@@ -128,14 +128,14 @@ def render_guest_portal(system) -> None:
         # Always accessible — no login needed
         render_search(system)
     elif page == "Book a Room":
-        if _require_login(system):
-            render_create_booking(system, get_current_guest_id())
+        if _require_login(system, storage):
+            render_create_booking(system, get_current_guest_id(), storage)
     elif page == "My Bookings":
-        if _require_login(system):
+        if _require_login(system, storage):
             render_my_bookings(system, get_current_guest_id())
     elif page == "Cancel a Booking":
-        if _require_login(system):
-            render_manage_booking(system, get_current_guest_id())
+        if _require_login(system, storage):
+            render_manage_booking(system, get_current_guest_id(), storage)
 
 
 def main() -> None:
@@ -156,7 +156,7 @@ def main() -> None:
     render_admin_login_form()
     st.divider()
     render_data_source_caption()
-    render_guest_portal(system)
+    render_guest_portal(system, storage)
 
 
 if __name__ == "__main__":

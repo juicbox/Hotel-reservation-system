@@ -4,7 +4,9 @@ from pathlib import Path
 
 import streamlit as st
 
+from hotel.enums import RoomStatus
 from hotel.hotel_system import HotelSystem
+from hotel.models import Guest
 from hotel.preload import preload_data
 from hotel.storage.excel_storage import ExcelStorage
 
@@ -34,7 +36,43 @@ def render_data_source_caption() -> None:
         st.caption("Loaded default preload data")
 
 
+def _merge_persisted_guest_records(storage: ExcelStorage, system: HotelSystem) -> None:
+    """Keep guest-created users/bookings if another Streamlit session saved them first."""
+    if not DATA_FILE.exists():
+        return
+
+    persisted = HotelSystem()
+    if not storage.load(persisted):
+        return
+
+    for user_id, user in persisted.users.items():
+        if user_id not in system.users:
+            system.users[user_id] = user
+
+    for booking_id, booking in persisted.bookings.items():
+        if booking_id not in system.bookings:
+            system.bookings[booking_id] = booking
+            guest = system.users.get(booking.guest_id)
+            if isinstance(guest, Guest) and booking_id not in guest.bookings:
+                guest.bookings.append(booking_id)
+
+            room = system.rooms.get(booking.room_id)
+            if room and booking.is_active and room.current_status not in {
+                RoomStatus.MAINTENANCE,
+                RoomStatus.CLEANING,
+            }:
+                room.current_status = RoomStatus.RESERVED
+
+
 def save_data(storage: ExcelStorage, system: HotelSystem) -> None:
     """Persist current in-memory data to the shared Excel file."""
-    storage.save(system)
+    try:
+        _merge_persisted_guest_records(storage, system)
+        storage.save(system)
+    except PermissionError:
+        st.error(
+            f"Could not save to {DATA_FILE}. Close the Excel file if it is open, "
+            "then click Save Data again."
+        )
+        return
     st.success(f"Data saved to {DATA_FILE}.")
